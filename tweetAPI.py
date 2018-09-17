@@ -5,6 +5,8 @@
 
 import tweepy #https://github.com/tweepy/tweepy
 import json
+import urllib.request
+#import os
 
 
 #Twitter API credentials
@@ -24,54 +26,28 @@ def get_all_tweets(screen_name):
     api = tweepy.API(auth)
     
     #initialize a list to hold all the tweepy Tweets
-    alltweets = [] 
-#    picdirect = []
-    
+#    os.mkdir('pic')
+    alltweets = []
+#    mediaurls = []
+    n = 1
     #make initial request for most recent tweets (200 is the maximum allowed count)
-    new_tweets = api.user_timeline(screen_name = screen_name,count=10)
+    new_tweets = api.user_timeline(screen_name = screen_name,count=200)
     
     #save most recent tweets
     alltweets.extend(new_tweets)
     
-    #save the id of the oldest tweet less one
-    oldest = alltweets[-1].id - 1
-    
-    #keep grabbing tweets until there are no tweets left to grab
-    while len(new_tweets) > 0:
+    for tweet in alltweets:
+        entities = tweet._json['entities']
+        if 'media' not in entities:
+            continue
+        else:
+            media = entities['media']
+            mediaurl = media[0]['media_url']
+#            mediaurls.append(mediaurl)
+            picpath = 'pic/image' + str(n) + '.jpg'
+            urllib.request.urlretrieve(mediaurl, picpath)
+            n = n + 1
         
-        #all subsiquent requests use the max_id param to prevent duplicates
-        new_tweets = api.user_timeline(screen_name = screen_name,count=10,max_id=oldest)
-        
-        #save most recent tweets
-        alltweets.extend(new_tweets)
-        
-        #update the id of the oldest tweet less one
-        oldest = alltweets[-1].id - 1
-        if(len(alltweets) > 15):
-            break
-        print ("...%s tweets downloaded so far" % (len(alltweets)))
-       
-    #write tweet objects to JSON
-    file = open('tweet.json', 'w') 
-    print ("Writing tweet objects to JSON please wait...")
-    a = alltweets[0]._json['quoted_status']['entities']['media']
-    b = a[0]
-    print(b['media_url'])
-    for status in alltweets:
-#        dic1 = status._json
-#        print(status._json)
-#        media = status._json['quoted_status']['entities']['media']
-#        dic2 = media[0]
-#        mediaurl = dic2['media_url']
-#        print(mediaurl)
-#        picdirect.append(mediaurl)
-        
-#        json.dump(status._json,file,sort_keys = True,indent = 4)
-    
-    #close the file
-#    print(picdirect[1])
-    print ("Done")
-    file.close()
 
 if __name__ == '__main__':
     #pass in the username of the account you want to download
