@@ -40,6 +40,8 @@ def get_all_tweets(screen_name):
     auth.set_access_token(access_key, access_secret)
     api = tweepy.API(auth)
     
+    if not os.path.exists('pic'):
+        os.mkdir('pic')
     #initialize a list to hold all the tweepy Tweets
 #    os.mkdir('pic')
     alltweets = []
@@ -65,7 +67,7 @@ def get_all_tweets(screen_name):
             n = n + 1
 
 def make_video():
-    os.system("ffmpeg -framerate 24 -r 1 -i /home/ece-student/pic/image%d.jpg output.mp4")        
+    os.system("ffmpeg -framerate 24 -r 1 -i /home/ece-student/pic/image%d.jpg -s 1080*1080 output.mp4")        
 
 def get_label():
     client = vision.ImageAnnotatorClient()
@@ -82,21 +84,31 @@ def get_label():
         response = client.label_detection(image=image)
         labels = response.label_annotations
         
-        description = ''
+        descriptions = []
+        description= ''        
+
+        num = 0
+        row = 0
         for label in labels:
             description = description + '<' + label.description + '>'
-            
+            num = num + 1
+            if num%3 == 0 or label == labels[-1]:
+                descriptions.append(description)
+                description = ''
+                row = row + 1
+
+#        print(num)   
 # add label to image        
 
         
         imageFile = imagepath
         im = Image.open(imageFile)
-        width = im.size[0]
         
-        font = ImageFont.truetype('LiberationSans-Regular.ttf', int(width/50))        
+        font = ImageFont.truetype('LiberationSans-Regular.ttf', 24)        
     
         draw = ImageDraw.Draw(im)
-        draw.text((0, 0), description, (255, 0, 0),font = font)    
+        for i in range(row):            
+            draw.text((0, 30*i), descriptions[i], (255, 0, 0),font = font)    
         draw = ImageDraw.Draw(im)                          
 
         im.save(imagepath)
