@@ -27,11 +27,20 @@ global access_key
 global access_secret
     
 
-def get_all_tweets(screen_name):    
+def get_all_tweets(screen_name, tweet_num):
+    print("downloading the images..")    
     #authorize twitter, initialize tweepy
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_key, access_secret)
     api = tweepy.API(auth)
+
+    #detect if there is a internet problem or if the screen_name is wrong    
+    try:
+        #make initial request for most recent tweets (200 is the maximum allowed count)
+        new_tweets = api.user_timeline(screen_name = screen_name, count=tweet_num)
+    except:
+        print("Twitter is not responding, you might have entered a wrong twitter name or there's a problem with your internet")
+        os._exit(0)
     
     #create a fold to keep the images
     if not os.path.exists('pic'):
@@ -41,10 +50,7 @@ def get_all_tweets(screen_name):
     alltweets = []
 
     n = 1
-    
-    #make initial request for most recent tweets (200 is the maximum allowed count)
-    new_tweets = api.user_timeline(screen_name = screen_name,count=200)
-    
+        
     #save most recent tweets
     alltweets.extend(new_tweets)
     
@@ -63,10 +69,12 @@ def get_all_tweets(screen_name):
 
 def make_video():
     # use FFMPEG to create a video out of images in pic folder
-    os.system("ffmpeg -framerate 24 -r 1 -i /home/ece-student/pic/image%d.jpg -s 1080*1080 output.mp4")        
+    print("generating the video..")
+    os.system("ffmpeg -framerate 24 -r 1 -i ./pic/image%d.jpg -s 1080*1080 output.mp4")        
 
 def get_label():
     #get labels information of the images from google cloud vision
+    print("labeling the images..")
     client = vision.ImageAnnotatorClient()
     for imagepath in picpaths:
         file_name = os.path.join(
@@ -75,9 +83,15 @@ def get_label():
         with io.open(file_name, 'rb') as image_file:
             content = image_file.read()
         image = types.Image(content=content)
-        response = client.label_detection(image=image)
-        labels = response.label_annotations
 
+        #detect if there is a problem with the internet        
+        try:
+            response = client.label_detection(image=image)
+            labels = response.label_annotations
+        except:
+            print("Google Vision is not responding, there might be a problem with your internet")
+            os._exit(0)
+        
         # get the description from the label information and put them three in a row
         descriptions = []
         description= ''        
@@ -103,9 +117,10 @@ def get_label():
 
 # the whole process of making a video from images from tweets
 def get_video(screen_name):
-    get_all_tweets(screen_name)
+    get_all_tweets(screen_name, tweet_num)
     get_label()
     make_video()
+    print("the video is ready, have a look at it")
     
     
 #runing directly from this file    
