@@ -12,3 +12,8 @@ Get the access json file from google cloud vison API and run the following statm
 Download the main program file into you computer, go into the file and run the run.py file.
 
 `python run.py`
+
+# mini-project3
+Added mongodb and mysql to the project seperately in branch mongodb and mysql.
+
+Using database file in the two branches can get information about the system and search for the user who is using the description entered.
